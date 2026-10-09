@@ -24,6 +24,7 @@ export interface BaseAsset {
   category: AssetCategory;
   floor: 1 | 2 | 3;
   status: AssetStatus;
+  maintenanceLocation?: 'DI_CABANG' | 'SEDANG_DIPERBAIKI';
   notes?: string;
   logs?: BorrowLog[];
 }

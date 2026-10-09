@@ -7,6 +7,7 @@ import { supabase } from './supabase';
 interface AssetContextType {
   assets: Asset[];
   updateAssetStatus: (id: string, status: Asset['status']) => void;
+  updateAssetMaintenanceLocation: (id: string, location: 'DI_CABANG' | 'SEDANG_DIPERBAIKI') => void;
   updateAssetWithLog: (id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[]) => void;
   getAssetById: (id: string) => Asset | undefined;
   resetData: () => void;
@@ -59,7 +60,11 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   };
 
   const updateAssetStatus = (id: string, status: Asset['status']) => {
-    saveAssets(assets.map(a => a.id === id ? { ...a, status } : a));
+    saveAssets(assets.map(a => a.id === id ? { ...a, status, maintenanceLocation: status === 'MAINTENANCE' ? 'DI_CABANG' : undefined } : a));
+  };
+
+  const updateAssetMaintenanceLocation = (id: string, location: 'DI_CABANG' | 'SEDANG_DIPERBAIKI') => {
+    saveAssets(assets.map(a => a.id === id ? { ...a, maintenanceLocation: location } : a));
   };
 
   const updateAssetWithLog = (id: string, status: Asset['status'], newLog?: BorrowLog, missingComponents?: string[]) => {
@@ -95,7 +100,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AssetContext.Provider value={{ assets, updateAssetStatus, updateAssetWithLog, getAssetById, resetData, isLoading }}>
+    <AssetContext.Provider value={{ assets, updateAssetStatus, updateAssetMaintenanceLocation, updateAssetWithLog, getAssetById, resetData, isLoading }}>
       {children}
     </AssetContext.Provider>
   );

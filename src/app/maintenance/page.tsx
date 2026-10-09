@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Asset } from '@/types';
 
 export default function MaintenancePage() {
-  const { assets, updateAssetStatus } = useAssets();
+  const { assets, updateAssetStatus, updateAssetMaintenanceLocation } = useAssets();
 
   // Find assets in maintenance
   const maintenanceAssets = assets.filter(a => a.status === 'MAINTENANCE');
@@ -47,9 +47,21 @@ export default function MaintenancePage() {
                       </Link>
                       <p className="text-xs font-mono text-red-600 mt-1">{asset.id}</p>
                     </div>
-                    <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-semibold">Sedang Diperbaiki</span>
+                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                      asset.maintenanceLocation === 'SEDANG_DIPERBAIKI' ? 'bg-orange-200 text-orange-800' : 'bg-red-200 text-red-800'
+                    }`}>
+                      {asset.maintenanceLocation === 'SEDANG_DIPERBAIKI' ? 'Sedang Diperbaiki' : 'Masih di Cabang'}
+                    </span>
                   </div>
-                  <div className="pt-2 border-t border-red-200 mt-1">
+                  <div className="pt-2 border-t border-red-200 mt-1 flex flex-wrap gap-2">
+                    {asset.maintenanceLocation !== 'SEDANG_DIPERBAIKI' && (
+                      <button 
+                        onClick={() => updateAssetMaintenanceLocation(asset.id, 'SEDANG_DIPERBAIKI')} 
+                        className="text-xs bg-orange-600 text-white px-3 py-1.5 rounded hover:bg-orange-700 transition"
+                      >
+                        Kirim ke Pusat (Perbaiki)
+                      </button>
+                    )}
                     <button 
                       onClick={() => { if(confirm('Tandai sudah diperbaiki dan kembalikan ke AVAILABLE?')) updateAssetStatus(asset.id, 'AVAILABLE') }} 
                       className="text-xs bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition"

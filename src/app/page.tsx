@@ -11,9 +11,16 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
 
   const filteredAssets = assets.filter(asset => {
-    if (filterFloor !== 'ALL' && asset.floor.toString() !== filterFloor) return false;
+    if (!asset) return false;
+    if (filterFloor !== 'ALL' && asset.floor?.toString() !== filterFloor) return false;
     if (filterCategory !== 'ALL' && asset.category !== filterCategory) return false;
-    if (search && !asset.name.toLowerCase().includes(search.toLowerCase()) && !asset.id.toLowerCase().includes(search.toLowerCase())) return false;
+    
+    if (search) {
+      const searchLower = search.toLowerCase();
+      const nameMatch = asset.name?.toLowerCase().includes(searchLower);
+      const idMatch = asset.id?.toLowerCase().includes(searchLower);
+      if (!nameMatch && !idMatch) return false;
+    }
     return true;
   });
 
