@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Asset } from '@/types';
 
 export default function MaintenancePage() {
-  const { assets } = useAssets();
+  const { assets, updateAssetStatus } = useAssets();
 
   // Find assets in maintenance
   const maintenanceAssets = assets.filter(a => a.status === 'MAINTENANCE');
@@ -39,14 +39,24 @@ export default function MaintenancePage() {
           ) : (
             <ul className="space-y-3">
               {maintenanceAssets.map(asset => (
-                <li key={asset.id} className="p-3 border border-red-100 bg-red-50 rounded-lg">
-                  <div className="flex justify-between">
-                    <Link href={`/asset/${encodeURIComponent(asset.id)}`} className="font-bold text-red-800 hover:underline">
-                      {asset.name}
-                    </Link>
-                    <span className="text-xs font-mono text-red-600">{asset.id}</span>
+                <li key={asset.id} className="p-4 border border-red-100 bg-red-50 rounded-lg flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <Link href={`/asset/${encodeURIComponent(asset.id)}`} className="font-bold text-red-800 hover:underline">
+                        {asset.name}
+                      </Link>
+                      <p className="text-xs font-mono text-red-600 mt-1">{asset.id}</p>
+                    </div>
+                    <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-semibold">Sedang Diperbaiki</span>
                   </div>
-                  <p className="text-sm text-red-700 mt-1">Lantai {asset.floor} | {asset.category}</p>
+                  <div className="pt-2 border-t border-red-200 mt-1">
+                    <button 
+                      onClick={() => { if(confirm('Tandai sudah diperbaiki dan kembalikan ke AVAILABLE?')) updateAssetStatus(asset.id, 'AVAILABLE') }} 
+                      className="text-xs bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition"
+                    >
+                      ✔ Tandai Selesai Diperbaiki
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -65,18 +75,32 @@ export default function MaintenancePage() {
               {missingComponentAssets.map(asset => {
                 const lastLog = asset.logs![asset.logs!.length - 1];
                 return (
-                  <li key={asset.id} className="p-3 border border-blue-100 bg-blue-50 rounded-lg">
-                    <div className="flex justify-between">
-                      <Link href={`/asset/${encodeURIComponent(asset.id)}`} className="font-bold text-blue-800 hover:underline">
-                        {asset.name}
-                      </Link>
-                      <span className="text-xs text-slate-500">{new Date(lastLog.checkinTime!).toLocaleDateString()}</span>
+                  <li key={asset.id} className="p-4 border border-blue-100 bg-blue-50 rounded-lg flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <Link href={`/asset/${encodeURIComponent(asset.id)}`} className="font-bold text-blue-800 hover:underline">
+                          {asset.name}
+                        </Link>
+                        <p className="text-xs text-slate-500 mt-1">{new Date(lastLog.checkinTime!).toLocaleDateString()}</p>
+                      </div>
+                      {asset.status !== 'MAINTENANCE' && (
+                        <button 
+                          onClick={() => { if(confirm('Pindahkan Box ini ke MAINTENANCE?')) updateAssetStatus(asset.id, 'MAINTENANCE') }}
+                          className="text-xs bg-amber-600 text-white px-3 py-1.5 rounded hover:bg-amber-700 transition"
+                        >
+                          ⚠ Tandai Rusak (Maintenance)
+                        </button>
+                      )}
+                      {asset.status === 'MAINTENANCE' && (
+                        <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-semibold">Maintenance</span>
+                      )}
                     </div>
-                    <p className="text-sm text-blue-700 mt-1">
-                      <span className="font-medium text-red-600">Minus: </span> 
-                      {lastLog.missingComponents?.join(', ')}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">Last user: {lastLog.borrowerName}</p>
+                    <div className="pt-2 border-t border-blue-200 mt-1">
+                      <p className="text-sm text-blue-700">
+                        <span className="font-medium text-red-600">Minus: </span> 
+                        {lastLog.missingComponents?.join(', ')}
+                      </p>
+                    </div>
                   </li>
                 );
               })}

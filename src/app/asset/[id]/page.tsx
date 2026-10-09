@@ -39,12 +39,16 @@ function AssetDetailContent() {
 
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault();
+    let actualMissingCheckout: string[] = [];
+    if (asset.category === 'KIT' && 'components' in asset) {
+      actualMissingCheckout = asset.components.filter(c => !missingCompsCheckout.includes(c.name)).map(c => c.name);
+    }
     const newLog: BorrowLog = {
       id: Math.random().toString(36).substr(2, 9),
       type: borrowType,
       borrowerName,
       checkoutTime: new Date().toISOString(),
-      checkoutMissingComponents: missingCompsCheckout,
+      checkoutMissingComponents: actualMissingCheckout,
     };
     updateAssetWithLog(decodedId, 'BORROWED', newLog);
     setCheckoutMode(false);
@@ -172,23 +176,26 @@ function AssetDetailContent() {
             
             {asset.category === 'KIT' && 'components' in asset && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-blue-900 mb-2">Kondisi Awal: Ceklis jika HILANG/RUSAK</label>
+                <label className="block text-sm font-medium text-blue-900 mb-2">Kelengkapan Awal: Ceklis yang ADA/DIBAWA</label>
                 <div className="space-y-2 bg-white p-3 rounded-lg border border-blue-100">
                   {asset.components.map(comp => (
                     <label key={comp.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                         checked={missingCompsCheckout.includes(comp.name)}
                         onChange={(e) => {
                           if(e.target.checked) setMissingCompsCheckout([...missingCompsCheckout, comp.name]);
                           else setMissingCompsCheckout(missingCompsCheckout.filter(m => m !== comp.name));
                         }}
                       />
-                      <span>Sudah Rusak/Hilang: {comp.name} (x{comp.quantity})</span>
+                      <span>{comp.name} (x{comp.quantity})</span>
                     </label>
                   ))}
                 </div>
+                {asset.components.length !== missingCompsCheckout.length && (
+                  <p className="text-xs text-red-500 mt-2">* Peringatan: Anda belum menceklis semua kelengkapan awal.</p>
+                )}
               </div>
             )}
             <div className="flex gap-2">
@@ -199,25 +206,35 @@ function AssetDetailContent() {
         )}
 
         {checkinMode && (
-          <form onSubmit={handleCheckin} className="mt-6 p-4 border border-green-200 bg-green-50 rounded-lg animate-in fade-in slide-in-from-top-2">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            // Calculate what is actually missing (total components minus what was checked as present)
+            let actualMissing: string[] = [];
+            if (asset.category === 'KIT' && 'components' in asset) {
+              actualMissing = asset.components.filter(c => !missingComps.includes(c.name)).map(c => c.name);
+            }
+            updateAssetWithLog(decodedId, 'AVAILABLE', undefined, actualMissing);
+            setCheckinMode(false);
+            setMissingComps([]);
+          }} className="mt-6 p-4 border border-green-200 bg-green-50 rounded-lg animate-in fade-in slide-in-from-top-2">
             <h3 className="font-bold text-green-800 mb-4">Check-in Asset</h3>
             
             {asset.category === 'KIT' && 'components' in asset && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-green-900 mb-2">Verifikasi Komponen (Ceklis jika HILANG/RUSAK)</label>
+                <label className="block text-sm font-medium text-green-900 mb-2">Verifikasi Kelengkapan (Ceklis yang DIKEMBALIKAN dengan baik)</label>
                 <div className="space-y-2 bg-white p-3 rounded-lg border border-green-100">
                   {asset.components.map(comp => (
                     <label key={comp.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
                         checked={missingComps.includes(comp.name)}
                         onChange={(e) => {
                           if(e.target.checked) setMissingComps([...missingComps, comp.name]);
                           else setMissingComps(missingComps.filter(m => m !== comp.name));
                         }}
                       />
-                      <span>Hilang/Rusak: {comp.name} (x{comp.quantity})</span>
+                      <span>Dikembalikan: {comp.name} (x{comp.quantity})</span>
                     </label>
                   ))}
                 </div>

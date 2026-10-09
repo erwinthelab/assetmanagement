@@ -6,12 +6,12 @@ import { Search, Filter, Box, Laptop, Grid2x2 } from 'lucide-react';
 
 export default function Dashboard() {
   const { assets, resetData } = useAssets();
-  const [filterFloor, setFilterFloor] = useState<number | 'ALL'>('ALL');
+  const [filterFloor, setFilterFloor] = useState<string>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [search, setSearch] = useState('');
 
   const filteredAssets = assets.filter(asset => {
-    if (filterFloor !== 'ALL' && asset.floor !== filterFloor) return false;
+    if (filterFloor !== 'ALL' && asset.floor.toString() !== filterFloor) return false;
     if (filterCategory !== 'ALL' && asset.category !== filterCategory) return false;
     if (search && !asset.name.toLowerCase().includes(search.toLowerCase()) && !asset.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -49,7 +49,7 @@ export default function Dashboard() {
           <select 
             className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={filterFloor}
-            onChange={(e) => setFilterFloor(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+            onChange={(e) => setFilterFloor(e.target.value)}
           >
             <option value="ALL">All Floors</option>
             <option value="1">Lantai 1 - Kinder</option>
