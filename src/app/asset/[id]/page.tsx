@@ -1,17 +1,16 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAssets } from '@/lib/AssetContext';
 import { ArrowLeft, CheckCircle, AlertTriangle, Box, Wrench } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AssetDetail() {
+function AssetDetailContent() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const decodedId = id ? decodeURIComponent(id) : '';
   const { getAssetById, updateAssetStatus } = useAssets();
-
   
   const asset = getAssetById(decodedId);
   const [reportMode, setReportMode] = useState(false);
@@ -152,5 +151,13 @@ export default function AssetDetail() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AssetDetail() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading asset details...</div>}>
+      <AssetDetailContent />
+    </Suspense>
   );
 }
