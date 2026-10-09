@@ -9,6 +9,7 @@ interface AssetContextType {
   updateAssetStatus: (id: string, status: Asset['status']) => void;
   updateAssetMaintenanceLocation: (id: string, location: 'DI_CABANG' | 'SEDANG_DIPERBAIKI') => void;
   updateAssetWithLog: (id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[]) => void;
+  updateMultipleAssetsWithLog: (updates: { id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[] }[]) => void;
   getAssetById: (id: string) => Asset | undefined;
   resetData: () => void;
   isLoading: boolean;
@@ -91,6 +92,30 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateMultipleAssetsWithLog = (updates: { id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[] }[]) => {
+    saveAssets(assets.map(a => {
+      const update = updates.find(u => u.id === a.id);
+      if (!update) return a;
+      
+      const updatedLogs = [...(a.logs || [])];
+      
+      if (update.log) {
+        updatedLogs.push(update.log);
+      } else if (update.status === 'AVAILABLE' && updatedLogs.length > 0) {
+        const lastLogIndex = updatedLogs.length - 1;
+        if (!updatedLogs[lastLogIndex].checkinTime) {
+          updatedLogs[lastLogIndex] = {
+            ...updatedLogs[lastLogIndex],
+            checkinTime: new Date().toISOString(),
+            missingComponents: update.missingComponents || []
+          };
+        }
+      }
+      
+      return { ...a, status: update.status, logs: updatedLogs };
+    }));
+  };
+
   const getAssetById = (id: string) => assets.find(a => a.id === id);
 
   const resetData = async () => {
@@ -100,7 +125,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AssetContext.Provider value={{ assets, updateAssetStatus, updateAssetMaintenanceLocation, updateAssetWithLog, getAssetById, resetData, isLoading }}>
+    <AssetContext.Provider value={{ assets, updateAssetStatus, updateAssetMaintenanceLocation, updateAssetWithLog, updateMultipleAssetsWithLog, getAssetById, resetData, isLoading }}>
       {children}
     </AssetContext.Provider>
   );

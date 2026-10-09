@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { CheckCircle, Undo2, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ClassPortal() {
-  const { assets, updateAssetWithLog } = useAssets();
+  const { assets, updateMultipleAssetsWithLog } = useAssets();
   
   const [activeTab, setActiveTab] = useState<'START' | 'ACTIVE'>('START');
   
@@ -63,12 +63,8 @@ export default function ClassPortal() {
       return;
     }
 
-    selectedAssetIds.forEach(id => {
-      const asset = assets.find(a => a.id === id);
-      if (!asset) return;
-
+    const updates = selectedAssetIds.map(id => {
       const missing = missingCompsCheckout[id] || [];
-
       const newLog: BorrowLog = {
         id: Math.random().toString(36).substr(2, 9),
         type: 'INTERNAL',
@@ -76,9 +72,10 @@ export default function ClassPortal() {
         checkoutTime: new Date().toISOString(),
         checkoutMissingComponents: missing,
       };
-
-      updateAssetWithLog(id, 'BORROWED', newLog);
+      return { id, status: 'BORROWED' as const, log: newLog };
     });
+
+    updateMultipleAssetsWithLog(updates);
     
     // Reset form
     setTeacherName('');
@@ -105,10 +102,12 @@ export default function ClassPortal() {
     const group = activeGroups[borrowerName];
     if (!group) return;
 
-    group.assets.forEach(asset => {
+    const updates = group.assets.map(asset => {
       const missing = missingCompsCheckin[asset.id] || [];
-      updateAssetWithLog(asset.id, 'AVAILABLE', undefined, missing);
+      return { id: asset.id, status: 'AVAILABLE' as const, missingComponents: missing };
     });
+
+    updateMultipleAssetsWithLog(updates);
 
     setReturningGroup(null);
     setMissingCompsCheckin({});
