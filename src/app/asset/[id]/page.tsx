@@ -1,15 +1,17 @@
 'use client';
-import { use, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useAssets } from '@/lib/AssetContext';
 import { ArrowLeft, CheckCircle, AlertTriangle, Box, Wrench } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AssetDetail({ params }: { params: Promise<{ id: string }> }) {
+export default function AssetDetail() {
   const router = useRouter();
-  const { id } = use(params);
-  const decodedId = decodeURIComponent(id);
+  const params = useParams();
+  const id = params.id as string;
+  const decodedId = id ? decodeURIComponent(id) : '';
   const { getAssetById, updateAssetStatus } = useAssets();
+
   
   const asset = getAssetById(decodedId);
   const [reportMode, setReportMode] = useState(false);
