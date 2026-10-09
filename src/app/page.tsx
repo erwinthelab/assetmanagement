@@ -5,7 +5,7 @@ import { useAssets } from '@/lib/AssetContext';
 import { Search, Filter, Box, Laptop, Grid2x2 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { assets } = useAssets();
+  const { assets, resetData } = useAssets();
   const [filterFloor, setFilterFloor] = useState<number | 'ALL'>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [search, setSearch] = useState('');
@@ -21,9 +21,14 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-slate-800">Asset Dashboard</h1>
-        <Link href="/print" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-          Print QR Codes
-        </Link>
+        <div className="flex gap-2">
+          <button onClick={() => { if(confirm('Reset all data to dummy?')) resetData() }} className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300 transition">
+            Reset Data
+          </button>
+          <Link href="/print" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+            Print QR Codes
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4">

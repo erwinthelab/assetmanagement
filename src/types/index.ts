@@ -7,6 +7,16 @@ export interface ChildComponent {
   quantity: number;
 }
 
+export interface BorrowLog {
+  id: string;
+  type: 'INTERNAL' | 'EXTERNAL';
+  borrowerName: string;
+  destination?: string;
+  checkoutTime: string;
+  checkinTime?: string;
+  missingComponents?: string[];
+}
+
 export interface BaseAsset {
   id: string; // Unique identifier or QR code
   name: string;
@@ -14,6 +24,7 @@ export interface BaseAsset {
   floor: 1 | 2 | 3;
   status: AssetStatus;
   notes?: string;
+  logs?: BorrowLog[];
 }
 
 export interface KitAsset extends BaseAsset {

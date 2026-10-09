@@ -2,19 +2,29 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAssets } from '@/lib/AssetContext';
-import { ArrowLeft, CheckCircle, AlertTriangle, Box, Wrench } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, Box, Wrench, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { BorrowLog } from '@/types';
 
 function AssetDetailContent() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const decodedId = id ? decodeURIComponent(id) : '';
-  const { getAssetById, updateAssetStatus } = useAssets();
+  const { getAssetById, updateAssetStatus, updateAssetWithLog } = useAssets();
   
   const asset = getAssetById(decodedId);
   const [reportMode, setReportMode] = useState(false);
   const [reportNote, setReportNote] = useState('');
+
+  // Borrow Flow state
+  const [checkoutMode, setCheckoutMode] = useState(false);
+  const [checkinMode, setCheckinMode] = useState(false);
+  const [borrowerName, setBorrowerName] = useState('');
+  const [borrowType, setBorrowType] = useState<'INTERNAL' | 'EXTERNAL'>('INTERNAL');
+  
+  // Missing components logic
+  const [missingComps, setMissingComps] = useState<string[]>([]);
 
   if (!asset) {
     return (
@@ -26,13 +36,29 @@ function AssetDetailContent() {
     );
   }
 
-  const handleStatusChange = (status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE') => {
-    updateAssetStatus(decodedId, status);
+  const handleCheckout = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newLog: BorrowLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: borrowType,
+      borrowerName,
+      checkoutTime: new Date().toISOString(),
+    };
+    updateAssetWithLog(decodedId, 'BORROWED', newLog);
+    setCheckoutMode(false);
+    setBorrowerName('');
+  };
+
+  const handleCheckin = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateAssetWithLog(decodedId, 'AVAILABLE', undefined, missingComps);
+    setCheckinMode(false);
+    setMissingComps([]);
   };
 
   const handleReport = (e: React.FormEvent) => {
     e.preventDefault();
-    handleStatusChange('MAINTENANCE');
+    updateAssetStatus(decodedId, 'MAINTENANCE');
     setReportMode(false);
     alert(`Damage report submitted for ${asset.name}. Note: ${reportNote}`);
   };
@@ -86,7 +112,7 @@ function AssetDetailContent() {
           )}
         </div>
 
-        {asset.category === 'KIT' && 'components' in asset && (
+        {asset.category === 'KIT' && 'components' in asset && !checkinMode && !checkoutMode && (
           <div className="mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
             <h3 className="font-bold text-slate-700 mb-3 flex items-center">
               <Box size={18} className="mr-2" /> Component Checklist
@@ -103,21 +129,82 @@ function AssetDetailContent() {
         )}
 
         <div className="flex flex-wrap gap-3">
-          {asset.status === 'AVAILABLE' && (
-            <button onClick={() => handleStatusChange('BORROWED')} className="flex-1 min-w-[140px] bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition flex justify-center items-center">
+          {asset.status === 'AVAILABLE' && !checkoutMode && (
+            <button onClick={() => setCheckoutMode(true)} className="flex-1 min-w-[140px] bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition flex justify-center items-center">
               <CheckCircle size={18} className="mr-2" /> Checkout (Borrow)
             </button>
           )}
-          {asset.status === 'BORROWED' && (
-            <button onClick={() => handleStatusChange('AVAILABLE')} className="flex-1 min-w-[140px] bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition flex justify-center items-center">
+          {asset.status === 'BORROWED' && !checkinMode && (
+            <button onClick={() => setCheckinMode(true)} className="flex-1 min-w-[140px] bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition flex justify-center items-center">
               <CheckCircle size={18} className="mr-2" /> Check-in (Return)
             </button>
           )}
           
-          <button onClick={() => setReportMode(!reportMode)} className="flex-1 min-w-[140px] bg-slate-100 text-slate-700 py-3 rounded-lg font-medium hover:bg-slate-200 transition flex justify-center items-center">
-            <AlertTriangle size={18} className="mr-2" /> Report Damage
-          </button>
+          {!reportMode && !checkoutMode && !checkinMode && (
+            <button onClick={() => setReportMode(true)} className="flex-1 min-w-[140px] bg-slate-100 text-slate-700 py-3 rounded-lg font-medium hover:bg-slate-200 transition flex justify-center items-center">
+              <AlertTriangle size={18} className="mr-2" /> Report Damage
+            </button>
+          )}
         </div>
+
+        {checkoutMode && (
+          <form onSubmit={handleCheckout} className="mt-6 p-4 border border-blue-200 bg-blue-50 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <h3 className="font-bold text-blue-800 mb-4">Checkout Asset</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-blue-900 mb-1">Peminjam (Nama/Kelas/Staff)</label>
+              <input 
+                type="text" required
+                className="w-full p-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Contoh: Budi - Kelas 3 / Cabang BSD"
+                value={borrowerName} onChange={e => setBorrowerName(e.target.value)}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-blue-900 mb-1">Tipe Peminjaman</label>
+              <select className="w-full p-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500" value={borrowType} onChange={e => setBorrowType(e.target.value as 'INTERNAL'|'EXTERNAL')}>
+                <option value="INTERNAL">Internal (Dipakai saat kelas)</option>
+                <option value="EXTERNAL">External (Dipinjam cabang lain/dibawa pulang)</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Submit Checkout</button>
+              <button type="button" onClick={() => setCheckoutMode(false)} className="bg-white text-slate-700 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 transition">Batal</button>
+            </div>
+          </form>
+        )}
+
+        {checkinMode && (
+          <form onSubmit={handleCheckin} className="mt-6 p-4 border border-green-200 bg-green-50 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <h3 className="font-bold text-green-800 mb-4">Check-in Asset</h3>
+            
+            {asset.category === 'KIT' && 'components' in asset && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-green-900 mb-2">Verifikasi Komponen (Ceklis jika HILANG/RUSAK)</label>
+                <div className="space-y-2 bg-white p-3 rounded-lg border border-green-100">
+                  {asset.components.map(comp => (
+                    <label key={comp.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                        checked={missingComps.includes(comp.name)}
+                        onChange={(e) => {
+                          if(e.target.checked) setMissingComps([...missingComps, comp.name]);
+                          else setMissingComps(missingComps.filter(m => m !== comp.name));
+                        }}
+                      />
+                      <span>Hilang/Rusak: {comp.name} (x{comp.quantity})</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">Selesaikan Check-in</button>
+              <button type="button" onClick={() => setCheckinMode(false)} className="bg-white text-slate-700 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 transition">Batal</button>
+            </div>
+          </form>
+        )}
 
         {reportMode && (
           <form onSubmit={handleReport} className="mt-6 p-4 border border-red-200 bg-red-50 rounded-lg animate-in fade-in slide-in-from-top-2">
@@ -150,6 +237,36 @@ function AssetDetailContent() {
           </form>
         )}
       </div>
+
+      {asset.logs && asset.logs.length > 0 && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center">
+            <Clock size={18} className="mr-2" /> Log Peminjaman
+          </h3>
+          <div className="space-y-4">
+            {[...asset.logs].reverse().map(log => (
+              <div key={log.id} className="border-l-2 border-blue-500 pl-4 py-1 text-sm">
+                <div className="flex justify-between items-start">
+                  <strong className="text-slate-800">{log.borrowerName} <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{log.type}</span></strong>
+                  <span className="text-xs text-slate-500">{new Date(log.checkoutTime).toLocaleDateString()} {new Date(log.checkoutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                <div className="text-slate-600 mt-1">
+                  {log.checkinTime ? (
+                    <span>
+                      Dikembalikan pada {new Date(log.checkinTime).toLocaleDateString()} {new Date(log.checkinTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      {log.missingComponents && log.missingComponents.length > 0 && (
+                        <span className="block mt-1 text-red-600 font-medium">Minus: {log.missingComponents.join(', ')}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 font-medium">Sedang dipinjam</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
