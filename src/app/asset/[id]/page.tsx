@@ -32,7 +32,7 @@ function AssetDetailContent() {
       <div className="text-center py-12">
         <h2 className="text-xl font-bold text-slate-800">Asset Not Found</h2>
         <p className="text-slate-500 mt-2 mb-6">No asset matches the ID: {decodedId}</p>
-        <Link href="/" className="text-blue-600 hover:underline">Back to Dashboard</Link>
+        <Link href="/dashboard" className="text-blue-600 hover:underline">Back to Dashboard</Link>
       </div>
     );
   }
