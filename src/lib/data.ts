@@ -34,10 +34,10 @@ export const initialData: Asset[] = [
   { id: 'FURN-L1-CHAIR-Y', name: 'Kursi Anak', category: 'FURNITURE', floor: 1, status: 'AVAILABLE', color: 'Kuning', quantity: 3 },
   { id: 'FURN-L1-TABLE', name: 'Meja Belajar', category: 'FURNITURE', floor: 1, status: 'AVAILABLE', color: 'Wood', quantity: 4 },
 
-  // L2 - JUNIOR - KITS
-  ...Array.from({ length: 17 }).map((_, i) => ({
-    id: `SPK-BOX-${(i + 1).toString().padStart(2, '0')}`,
-    name: `SPIKE BOX ${(i + 1).toString().padStart(2, '0')}`,
+  // L2 - JUNIOR - KITS (01-07 and 15-24)
+  ...[1, 2, 3, 4, 5, 6, 7, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24].map((num) => ({
+    id: `SPK-BOX-${num.toString().padStart(2, '0')}`,
+    name: `SPIKE BOX ${num.toString().padStart(2, '0')}`,
     category: 'KIT' as const,
     floor: 2 as const,
     status: 'AVAILABLE' as const,
