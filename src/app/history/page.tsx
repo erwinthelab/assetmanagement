@@ -9,25 +9,51 @@ export default function HistoryPage() {
   
   const [filterType, setFilterType] = useState<'ALL' | 'THIS_WEEK' | 'THIS_MONTH'>('ALL');
 
-  // Extract all logs from all assets and flatten them into a single array
-  const allLogs = assets.reduce((acc, asset) => {
+  // Extract all logs and group them by class session (borrowerName + checkoutTime)
+  const groupedLogs = assets.reduce((acc, asset) => {
     if (asset.logs && asset.logs.length > 0) {
-      const assetLogs = asset.logs.map(log => ({
-        ...log,
-        assetName: asset.name,
-        assetId: asset.id,
-        assetCategory: asset.category,
-      }));
-      return [...acc, ...assetLogs];
+      asset.logs.forEach(log => {
+        // Create a unique key for the session
+        // To handle slight differences in ms, we group by minute
+        const timeKey = new Date(log.checkoutTime).toISOString().slice(0, 16);
+        const groupKey = `${log.borrowerName}_${timeKey}`;
+        
+        if (!acc[groupKey]) {
+          acc[groupKey] = {
+            id: groupKey,
+            borrowerName: log.borrowerName,
+            type: log.type,
+            checkoutTime: log.checkoutTime,
+            // Use the earliest checkinTime if some boxes are returned, but mostly they return together
+            checkinTime: log.checkinTime,
+            assets: []
+          };
+        }
+        
+        // Push the specific asset details to this session
+        acc[groupKey].assets.push({
+          assetName: asset.name,
+          assetId: asset.id,
+          checkoutMissing: log.checkoutMissingComponents || [],
+          checkinMissing: log.missingComponents || []
+        });
+
+        // Update checkinTime if this box hasn't been returned yet
+        if (!log.checkinTime) {
+          acc[groupKey].checkinTime = undefined;
+        }
+      });
     }
     return acc;
-  }, [] as any[]).sort((a, b) => new Date(b.checkoutTime).getTime() - new Date(a.checkoutTime).getTime());
+  }, {} as Record<string, any>);
+
+  const allSessions = Object.values(groupedLogs).sort((a, b) => new Date(b.checkoutTime).getTime() - new Date(a.checkoutTime).getTime());
 
   // Filter logs based on selection
-  const filteredLogs = allLogs.filter(log => {
+  const filteredSessions = allSessions.filter(session => {
     if (filterType === 'ALL') return true;
     
-    const logDate = new Date(log.checkoutTime);
+    const logDate = new Date(session.checkoutTime);
     const now = new Date();
     
     if (filterType === 'THIS_MONTH') {
@@ -35,7 +61,6 @@ export default function HistoryPage() {
     }
     
     if (filterType === 'THIS_WEEK') {
-      // Very simple this week check (within last 7 days)
       const diffTime = Math.abs(now.getTime() - logDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
       return diffDays <= 7;
@@ -69,29 +94,26 @@ export default function HistoryPage() {
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-        {filteredLogs.length === 0 ? (
+        {filteredSessions.length === 0 ? (
           <p className="text-center text-slate-500 py-10">Belum ada riwayat peminjaman.</p>
         ) : (
-          filteredLogs.map(log => (
-            <div key={log.id} className="border border-slate-100 rounded-lg p-4 hover:bg-slate-50 transition">
-              <div className="flex flex-col md:flex-row justify-between md:items-start gap-2">
+          filteredSessions.map(session => (
+            <div key={session.id} className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition bg-white">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row justify-between md:items-start gap-2">
                 <div>
-                  <h3 className="font-bold text-slate-800 text-lg">{log.borrowerName}</h3>
-                  <p className="text-sm text-slate-600">
-                    Meminjam <Link href={`/asset/${encodeURIComponent(log.assetId)}`} className="font-bold text-blue-600 hover:underline">{log.assetName}</Link> ({log.assetId})
-                  </p>
-                  <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-slate-200 text-slate-700 rounded">
-                    Tipe: {log.type}
+                  <h3 className="font-bold text-slate-800 text-lg">{session.borrowerName}</h3>
+                  <span className="inline-block mt-1 px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded">
+                    Meminjam {session.assets.length} Box
                   </span>
                 </div>
                 
                 <div className="text-left md:text-right text-sm space-y-1">
                   <p className="text-slate-700">
-                    <span className="font-medium">Pinjam:</span> {new Date(log.checkoutTime).toLocaleDateString()} {new Date(log.checkoutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    <span className="font-medium">Pinjam:</span> {new Date(session.checkoutTime).toLocaleDateString()} {new Date(session.checkoutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </p>
-                  {log.checkinTime ? (
+                  {session.checkinTime ? (
                     <p className="text-green-700">
-                      <span className="font-medium">Kembali:</span> {new Date(log.checkinTime).toLocaleDateString()} {new Date(log.checkinTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      <span className="font-medium">Kembali:</span> {new Date(session.checkinTime).toLocaleDateString()} {new Date(session.checkinTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </p>
                   ) : (
                     <p className="text-amber-600 font-bold">Sedang Dipinjam</p>
@@ -99,21 +121,36 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* Tampilkan jika ada minus */}
-              {(log.checkoutMissingComponents?.length > 0 || log.missingComponents?.length > 0) && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm">
-                  {log.checkoutMissingComponents?.length > 0 && (
-                    <p className="text-red-700">
-                      <span className="font-bold">Minus saat Pinjam:</span> {log.checkoutMissingComponents.join(', ')}
+              <div className="p-4 bg-white space-y-3">
+                {session.assets.map((a: any, index: number) => (
+                  <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-50 last:border-0 pb-2 last:pb-0">
+                    <p className="text-sm font-medium text-slate-700">
+                      <Link href={`/asset/${encodeURIComponent(a.assetId)}`} className="hover:underline text-slate-800">
+                        {a.assetName}
+                      </Link>
                     </p>
-                  )}
-                  {log.missingComponents?.length > 0 && (
-                    <p className="text-red-700">
-                      <span className="font-bold">Minus saat Kembali:</span> {log.missingComponents.join(', ')}
-                    </p>
-                  )}
-                </div>
-              )}
+                    
+                    <div className="text-xs">
+                      {a.checkoutMissing.length > 0 || a.checkinMissing.length > 0 ? (
+                        <div className="space-y-1">
+                          {a.checkoutMissing.length > 0 && (
+                            <span className="block text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">
+                              <span className="font-bold">Minus (Awal):</span> {a.checkoutMissing.join(', ')}
+                            </span>
+                          )}
+                          {a.checkinMissing.length > 0 && (
+                            <span className="block text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">
+                              <span className="font-bold">Minus (Akhir):</span> {a.checkinMissing.join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">Tidak ada minus</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))
         )}
