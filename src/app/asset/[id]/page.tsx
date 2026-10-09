@@ -24,6 +24,7 @@ function AssetDetailContent() {
   const [borrowType, setBorrowType] = useState<'INTERNAL' | 'EXTERNAL'>('INTERNAL');
   
   // Missing components logic
+  const [missingCompsCheckout, setMissingCompsCheckout] = useState<string[]>([]);
   const [missingComps, setMissingComps] = useState<string[]>([]);
 
   if (!asset) {
@@ -43,10 +44,12 @@ function AssetDetailContent() {
       type: borrowType,
       borrowerName,
       checkoutTime: new Date().toISOString(),
+      checkoutMissingComponents: missingCompsCheckout,
     };
     updateAssetWithLog(decodedId, 'BORROWED', newLog);
     setCheckoutMode(false);
     setBorrowerName('');
+    setMissingCompsCheckout([]);
   };
 
   const handleCheckin = (e: React.FormEvent) => {
@@ -166,6 +169,28 @@ function AssetDetailContent() {
                 <option value="EXTERNAL">External (Dipinjam cabang lain/dibawa pulang)</option>
               </select>
             </div>
+            
+            {asset.category === 'KIT' && 'components' in asset && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-blue-900 mb-2">Kondisi Awal: Ceklis jika HILANG/RUSAK</label>
+                <div className="space-y-2 bg-white p-3 rounded-lg border border-blue-100">
+                  {asset.components.map(comp => (
+                    <label key={comp.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                        checked={missingCompsCheckout.includes(comp.name)}
+                        onChange={(e) => {
+                          if(e.target.checked) setMissingCompsCheckout([...missingCompsCheckout, comp.name]);
+                          else setMissingCompsCheckout(missingCompsCheckout.filter(m => m !== comp.name));
+                        }}
+                      />
+                      <span>Sudah Rusak/Hilang: {comp.name} (x{comp.quantity})</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex gap-2">
               <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Submit Checkout</button>
               <button type="button" onClick={() => setCheckoutMode(false)} className="bg-white text-slate-700 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 transition">Batal</button>

@@ -14,7 +14,8 @@ export interface BorrowLog {
   destination?: string;
   checkoutTime: string;
   checkinTime?: string;
-  missingComponents?: string[];
+  checkoutMissingComponents?: string[];
+  missingComponents?: string[]; // checkin
 }
 
 export interface BaseAsset {
