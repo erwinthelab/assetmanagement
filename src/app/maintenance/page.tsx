@@ -1,6 +1,6 @@
 'use client';
 import { useAssets } from '@/lib/AssetContext';
-import { ArrowLeft, Wrench, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Wrench, AlertTriangle, Box } from 'lucide-react';
 import Link from 'next/link';
 import { Asset } from '@/types';
 
