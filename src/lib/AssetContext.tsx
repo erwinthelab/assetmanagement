@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Asset, BorrowLog } from '@/types';
+import { Asset, BorrowLog, DamageReport } from '@/types';
 import { initialData } from './data';
 import { supabase } from './supabase';
 
@@ -10,6 +10,7 @@ interface AssetContextType {
   updateAssetMaintenanceLocation: (id: string, location: 'DI_CABANG' | 'SEDANG_DIPERBAIKI') => void;
   updateAssetWithLog: (id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[]) => void;
   updateMultipleAssetsWithLog: (updates: { id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[] }[]) => void;
+  reportAssetDamage: (id: string, report: DamageReport, changeStatusToMaintenance?: boolean) => void;
   getAssetById: (id: string) => Asset | undefined;
   resetData: () => void;
   isLoading: boolean;
@@ -92,6 +93,20 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const reportAssetDamage = (id: string, report: DamageReport, changeStatusToMaintenance: boolean = false) => {
+    saveAssets(assets.map(a => {
+      if (a.id !== id) return a;
+      
+      const updatedReports = [...(a.damageReports || []), report];
+      return { 
+        ...a, 
+        damageReports: updatedReports,
+        status: changeStatusToMaintenance ? 'MAINTENANCE' : a.status,
+        maintenanceLocation: changeStatusToMaintenance ? 'DI_CABANG' : a.maintenanceLocation
+      };
+    }));
+  };
+
   const updateMultipleAssetsWithLog = (updates: { id: string, status: Asset['status'], log?: BorrowLog, missingComponents?: string[] }[]) => {
     saveAssets(assets.map(a => {
       const update = updates.find(u => u.id === a.id);
@@ -125,7 +140,7 @@ export function AssetProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AssetContext.Provider value={{ assets, updateAssetStatus, updateAssetMaintenanceLocation, updateAssetWithLog, updateMultipleAssetsWithLog, getAssetById, resetData, isLoading }}>
+    <AssetContext.Provider value={{ assets, updateAssetStatus, updateAssetMaintenanceLocation, updateAssetWithLog, updateMultipleAssetsWithLog, reportAssetDamage, getAssetById, resetData, isLoading }}>
       {children}
     </AssetContext.Provider>
   );

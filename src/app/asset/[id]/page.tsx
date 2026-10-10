@@ -11,7 +11,7 @@ function AssetDetailContent() {
   const params = useParams();
   const id = params.id as string;
   const decodedId = id ? decodeURIComponent(id) : '';
-  const { getAssetById, updateAssetStatus, updateAssetWithLog } = useAssets();
+  const { getAssetById, updateAssetStatus, updateAssetWithLog, reportAssetDamage } = useAssets();
   
   const asset = getAssetById(decodedId);
   const [reportMode, setReportMode] = useState(false);
@@ -26,6 +26,10 @@ function AssetDetailContent() {
   // Missing components logic
   const [missingCompsCheckout, setMissingCompsCheckout] = useState<string[]>([]);
   const [missingComps, setMissingComps] = useState<string[]>([]);
+
+  // Damage Report state
+  const [damagedComponents, setDamagedComponents] = useState<string[]>([]);
+  const [reportWholeAsset, setReportWholeAsset] = useState<boolean>(false);
 
   if (!asset) {
     return (
@@ -65,8 +69,19 @@ function AssetDetailContent() {
 
   const handleReport = (e: React.FormEvent) => {
     e.preventDefault();
-    updateAssetStatus(decodedId, 'MAINTENANCE');
+    const isKit = asset.category === 'KIT';
+    const isWholeAsset = !isKit || reportWholeAsset || damagedComponents.length === 0;
+    
+    reportAssetDamage(decodedId, {
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date().toISOString(),
+      components: isWholeAsset ? [] : damagedComponents,
+      note: reportNote
+    }, isWholeAsset); // only set to maintenance if whole asset is damaged
+    
     setReportMode(false);
+    setDamagedComponents([]);
+    setReportWholeAsset(false);
     alert(`Damage report submitted for ${asset.name}. Note: ${reportNote}`);
   };
 
@@ -253,13 +268,52 @@ function AssetDetailContent() {
             <h3 className="font-bold text-red-800 flex items-center mb-4">
               <Wrench size={18} className="mr-2" /> File Damage Report
             </h3>
+
+            {asset.category === 'KIT' && 'components' in asset && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-red-900 mb-2">Bagian yang rusak (Opsional)</label>
+                
+                <div className="mb-3">
+                  <label className="flex items-center gap-2 text-sm font-medium text-red-800 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={reportWholeAsset}
+                      onChange={(e) => setReportWholeAsset(e.target.checked)}
+                      className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                    />
+                    Rusak 1 Box / Keseluruhan (Akan mengubah status menjadi Maintenance)
+                  </label>
+                </div>
+
+                {!reportWholeAsset && (
+                  <div className="space-y-2 bg-white p-3 rounded-lg border border-red-100">
+                    <p className="text-xs text-slate-500 mb-2">Pilih komponen yang rusak (status box akan tetap tersedia/dipinjam):</p>
+                    {asset.components.map(comp => (
+                      <label key={comp.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                          checked={damagedComponents.includes(comp.name)}
+                          onChange={(e) => {
+                            if(e.target.checked) setDamagedComponents([...damagedComponents, comp.name]);
+                            else setDamagedComponents(damagedComponents.filter(m => m !== comp.name));
+                          }}
+                        />
+                        <span>{comp.name} (x{comp.quantity})</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="mb-4">
-              <label className="block text-sm font-medium text-red-900 mb-1">Chronology / Details</label>
+              <label className="block text-sm font-medium text-red-900 mb-1">Chronology / Details / Alasan Rusak</label>
               <textarea 
                 required
                 className="w-full p-3 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
                 rows={3}
-                placeholder="What happened to the asset?"
+                placeholder="What happened to the asset? (e.g. Kabel putus, motor tidak menyala)"
                 value={reportNote}
                 onChange={(e) => setReportNote(e.target.value)}
               ></textarea>
@@ -270,7 +324,7 @@ function AssetDetailContent() {
             </div>
             <div className="flex gap-2">
               <button type="submit" className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition">
-                Submit & Set to Maintenance
+                Submit Report
               </button>
               <button type="button" onClick={() => setReportMode(false)} className="bg-white text-slate-700 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 transition">
                 Cancel

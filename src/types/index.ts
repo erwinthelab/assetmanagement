@@ -18,6 +18,15 @@ export interface BorrowLog {
   missingComponents?: string[]; // checkin
 }
 
+export interface DamageReport {
+  id: string;
+  date: string;
+  components: string[]; // empty if the whole asset is damaged
+  note: string;
+  reporter?: string;
+}
+
+
 export interface BaseAsset {
   id: string; // Unique identifier or QR code
   name: string;
@@ -27,6 +36,7 @@ export interface BaseAsset {
   maintenanceLocation?: 'DI_CABANG' | 'SEDANG_DIPERBAIKI';
   notes?: string;
   logs?: BorrowLog[];
+  damageReports?: DamageReport[];
 }
 
 export interface KitAsset extends BaseAsset {
