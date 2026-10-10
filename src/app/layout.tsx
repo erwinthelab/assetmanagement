@@ -28,7 +28,7 @@ export default function RootLayout({
         {/* Desktop Header / Mobile Header */}
         <header className="fixed top-0 left-0 right-0 h-14 bg-blue-600 text-white flex items-center px-4 shadow-md z-50 md:static md:h-16">
           <div className="max-w-6xl mx-auto w-full flex justify-between items-center">
-            <Link href="/" className="font-bold text-lg tracking-tight">AMTC</Link>
+            <Link href="/" className="font-bold text-lg tracking-tight">The Lab Kelapa Gading - AMTC</Link>
             <nav className="hidden md:flex gap-6">
               <Link href="/" className="hover:text-blue-200 transition">Dashboard</Link>
               <Link href="/scanner" className="hover:text-blue-200 transition">Scan QR</Link>

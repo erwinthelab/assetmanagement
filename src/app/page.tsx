@@ -7,9 +7,9 @@ import { CheckCircle, Undo2, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ClassPortal() {
   const { assets, updateMultipleAssetsWithLog } = useAssets();
-  
+
   const [activeTab, setActiveTab] = useState<'START' | 'ACTIVE'>('START');
-  
+
   // Checkout State
   const [teacherName, setTeacherName] = useState('');
   const [classType, setClassType] = useState<'KINDER' | 'JUNIOR' | 'CODER' | ''>('');
@@ -20,7 +20,7 @@ export default function ClassPortal() {
   // Active Classes grouping
   // We identify an active class by borrowerName (which contains the teacher and class)
   const activeBorrowedAssets = assets.filter(a => a.status === 'BORROWED' && a.category === 'KIT');
-  
+
   // Group by borrowerName
   const activeGroups = activeBorrowedAssets.reduce((acc, asset) => {
     const lastLog = asset.logs?.[asset.logs.length - 1];
@@ -43,7 +43,7 @@ export default function ClassPortal() {
   const availableKits = assets.filter(a => a.category === 'KIT' && a.status === 'AVAILABLE' && a.floor === getFloor());
 
   const handleToggleAsset = (assetId: string) => {
-    setSelectedAssetIds(prev => 
+    setSelectedAssetIds(prev =>
       prev.includes(assetId) ? prev.filter(id => id !== assetId) : [...prev, assetId]
     );
   };
@@ -76,7 +76,7 @@ export default function ClassPortal() {
     });
 
     updateMultipleAssetsWithLog(updates);
-    
+
     // Reset form
     setTeacherName('');
     setClassType('');
@@ -117,60 +117,60 @@ export default function ClassPortal() {
   return (
     <div className="max-w-xl mx-auto space-y-6 mt-10">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">Class Portal</h1>
-        <p className="text-slate-500 mt-2">Mulai kelas atau selesaikan kelas dengan cepat.</p>
+        <h1 className="text-3xl font-bold text-slate-800">Booking & Return</h1>
+        <p className="text-slate-500 mt-2">Record of classes that are currently borrowing SPIKE Box</p>
       </div>
 
       <div className="flex bg-slate-100 p-1 rounded-lg">
-        <button 
+        <button
           onClick={() => setActiveTab('START')}
           className={`flex-1 py-2 text-sm font-bold rounded-md transition ${activeTab === 'START' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          ▶ Mulai Kelas Baru
+          ▶ Start New Classes
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('ACTIVE')}
           className={`flex-1 py-2 text-sm font-bold rounded-md transition ${activeTab === 'ACTIVE' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          Selesaikan Kelas ({Object.keys(activeGroups).length})
+          Return Classes ({Object.keys(activeGroups).length})
         </button>
       </div>
 
       {activeTab === 'START' && (
         <form onSubmit={handleSubmitCheckout} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-5 animate-in fade-in">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nama Teacher / Pengajar</label>
-            <input 
+            <label className="block text-sm font-medium text-slate-700 mb-1">Teacher's Name</label>
+            <input
               type="text" required
               className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Contoh: Erwin"
+              placeholder="Teacher's Name"
               value={teacherName} onChange={e => setTeacherName(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Pilih Kelas</label>
-            <select 
+            <label className="block text-sm font-medium text-slate-700 mb-1">Select Class</label>
+            <select
               required
               className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
               value={classType} onChange={e => {
                 setClassType(e.target.value as any);
-                setSelectedAssetIds([]); 
+                setSelectedAssetIds([]);
                 setMissingCompsCheckout({});
               }}
             >
-              <option value="" disabled>-- Pilih Kelas --</option>
-              <option value="KINDER">Kinder (Lantai 1)</option>
-              <option value="JUNIOR">Junior (Lantai 2)</option>
-              <option value="CODER">Coder (Lantai 3)</option>
+              <option value="" disabled>-- Choose Class --</option>
+              <option value="KINDER">Kinder (1st Floor)</option>
+              <option value="JUNIOR">Junior (2nd Floor)</option>
+              <option value="CODER">Coder (3rd Floor)</option>
             </select>
           </div>
 
           {classType && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Pilih Box SPIKE yang Dipakai (Bisa Lebih dari 1)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Select SPIKE Box</label>
               {availableKits.length === 0 ? (
-                <p className="text-red-500 text-sm py-2 bg-red-50 px-3 rounded-lg border border-red-100">Semua box di Lantai {getFloor()} sedang dipinjam atau dalam perbaikan.</p>
+                <p className="text-red-500 text-sm py-2 bg-red-50 px-3 rounded-lg border border-red-100">All SPIKE Box on Floor {getFloor()} are currently borrowed or under maintenance.</p>
               ) : (
                 <div className="space-y-3">
                   {availableKits.map(kit => {
@@ -178,24 +178,24 @@ export default function ClassPortal() {
                     return (
                       <div key={kit.id} className={`border rounded-lg overflow-hidden transition ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}>
                         <label className="flex items-center p-3 cursor-pointer hover:bg-slate-50">
-                          <input 
-                            type="checkbox" 
+                          <input
+                            type="checkbox"
                             className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 mr-3"
                             checked={isSelected}
                             onChange={() => handleToggleAsset(kit.id)}
                           />
                           <span className={`font-medium ${isSelected ? 'text-blue-800' : 'text-slate-700'}`}>{kit.name} ({kit.id})</span>
                         </label>
-                        
-                        {/* Jika Box dipilih, tampilkan opsi ceklis jika ada yang hilang (Optional) */}
+
+                        {/* If Box is selected, display checkbox options if any are missing (Optional) */}
                         {isSelected && 'components' in kit && (
                           <div className="p-3 pt-0 border-t border-blue-100 mt-1">
-                            <p className="text-xs text-blue-700 font-medium mb-2">Ceklis jika ada komponen yang SUDAH HILANG / RUSAK sejak awal:</p>
+                            <p className="text-xs text-blue-700 font-medium mb-2">Check if any components are MISSING / DAMAGED since the beginning:</p>
                             <div className="grid grid-cols-2 gap-1">
                               {kit.components.map(comp => (
                                 <label key={comp.id} className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer bg-white p-1.5 rounded border border-blue-100">
-                                  <input 
-                                    type="checkbox" 
+                                  <input
+                                    type="checkbox"
                                     className="w-3 h-3 text-red-500 rounded focus:ring-red-500"
                                     checked={(missingCompsCheckout[kit.id] || []).includes(comp.name)}
                                     onChange={() => handleToggleMissingCheckout(kit.id, comp.name)}
@@ -214,8 +214,8 @@ export default function ClassPortal() {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={selectedAssetIds.length === 0}
             className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
@@ -236,11 +236,11 @@ export default function ClassPortal() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="font-bold text-lg text-slate-800">{group.borrowerName}</h3>
-                    <p className="text-xs text-slate-500">Mulai: {new Date(group.checkoutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    <p className="text-xs text-slate-500">Mulai: {new Date(group.checkoutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
                   <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded font-bold">{group.assets.length} Box Dipinjam</span>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2 mb-4">
                   {group.assets.map(a => (
                     <span key={a.id} className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded border border-slate-200">
@@ -251,7 +251,7 @@ export default function ClassPortal() {
 
                 {returningGroup === group.borrowerName ? (
                   <div className="mt-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
-                    <p className="text-sm font-bold text-red-700 mb-2">Ceklis jika ada komponen yang HILANG/RUSAK saat pengembalian:</p>
+                    <p className="text-sm font-bold text-red-700 mb-2">Check if any components are MISSING / DAMAGED when returning:</p>
                     <div className="space-y-3 mb-4">
                       {group.assets.map(kit => (
                         <div key={kit.id} className="bg-red-50 p-3 rounded border border-red-100">
@@ -260,8 +260,8 @@ export default function ClassPortal() {
                             <div className="grid grid-cols-2 gap-1">
                               {kit.components.map(comp => (
                                 <label key={comp.id} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer bg-white p-1.5 rounded border border-red-100">
-                                  <input 
-                                    type="checkbox" 
+                                  <input
+                                    type="checkbox"
                                     className="w-3 h-3 text-red-600 rounded focus:ring-red-500"
                                     checked={(missingCompsCheckin[kit.id] || []).includes(comp.name)}
                                     onChange={() => handleToggleMissingCheckin(kit.id, comp.name)}
@@ -276,16 +276,16 @@ export default function ClassPortal() {
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => handleSubmitCheckin(group.borrowerName)} className="flex-1 bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">
-                        Konfirmasi Selesai
+                        Confirm Finish
                       </button>
                       <button onClick={() => setReturningGroup(null)} className="px-4 bg-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:bg-slate-300 transition">
-                        Batal
+                        Cancel
                       </button>
                     </div>
                   </div>
                 ) : (
                   <button onClick={() => setReturningGroup(group.borrowerName)} className="w-full bg-green-50 text-green-700 font-bold py-2 rounded-lg border border-green-200 hover:bg-green-100 transition flex items-center justify-center">
-                    <Undo2 size={16} className="mr-2" /> Selesaikan Kelas & Kembalikan Box
+                    <Undo2 size={16} className="mr-2" /> Finish Classes & Return Box
                   </button>
                 )}
               </div>
@@ -295,9 +295,9 @@ export default function ClassPortal() {
       )}
 
       <div className="flex flex-wrap justify-center gap-4 text-sm mt-8 border-t border-slate-200 pt-6">
-        <Link href="/dashboard" className="text-slate-500 hover:text-blue-600 font-medium transition">Admin Dashboard</Link>
+        <Link href="/dashboard" className="text-slate-500 hover:text-blue-600 font-medium transition">AMTS Dashboard</Link>
         <span className="text-slate-300">|</span>
-        <Link href="/history" className="text-slate-500 hover:text-blue-600 font-medium transition">History Peminjaman</Link>
+        <Link href="/history" className="text-slate-500 hover:text-blue-600 font-medium transition">Borrowing History</Link>
       </div>
     </div>
   );
