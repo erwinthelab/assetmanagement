@@ -72,18 +72,18 @@ export default function HistoryPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/" className="text-slate-500 hover:text-slate-800 transition">
+        <Link href="/" className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition">
           <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-2xl font-bold text-slate-800 flex items-center">
-          <History className="mr-2 text-blue-600" /> History Peminjaman
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center">
+          <History className="mr-2 text-blue-600 dark:text-blue-400" /> History Peminjaman
         </h1>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 transition-colors">
         <Filter className="text-slate-400" size={20} />
         <select 
-          className="p-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+          className="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm transition-colors"
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as any)}
         >
@@ -93,39 +93,39 @@ export default function HistoryPage() {
         </select>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-4 transition-colors">
         {filteredSessions.length === 0 ? (
-          <p className="text-center text-slate-500 py-10">Belum ada riwayat peminjaman.</p>
+          <p className="text-center text-slate-500 dark:text-slate-400 py-10">Belum ada riwayat peminjaman.</p>
         ) : (
           filteredSessions.map(session => (
-            <div key={session.id} className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition bg-white">
-              <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row justify-between md:items-start gap-2">
+            <div key={session.id} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:shadow-md transition bg-white dark:bg-slate-900">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-start gap-2">
                 <div>
-                  <h3 className="font-bold text-slate-800 text-lg">{session.borrowerName}</h3>
-                  <span className="inline-block mt-1 px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg">{session.borrowerName}</h3>
+                  <span className="inline-block mt-1 px-2.5 py-1 text-xs font-semibold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/50 rounded-full">
                     Meminjam {session.assets.length} Box
                   </span>
                 </div>
                 
                 <div className="text-left md:text-right text-sm space-y-1">
-                  <p className="text-slate-700">
-                    <span className="font-medium">Pinjam:</span> {new Date(session.checkoutTime).toLocaleDateString()} {new Date(session.checkoutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  <p className="text-slate-700 dark:text-slate-300">
+                    <span className="font-medium text-slate-500 dark:text-slate-400">Pinjam:</span> {new Date(session.checkoutTime).toLocaleDateString()} {new Date(session.checkoutTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </p>
                   {session.checkinTime ? (
-                    <p className="text-green-700">
+                    <p className="text-green-700 dark:text-green-400">
                       <span className="font-medium">Kembali:</span> {new Date(session.checkinTime).toLocaleDateString()} {new Date(session.checkinTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </p>
                   ) : (
-                    <p className="text-amber-600 font-bold">Sedang Dipinjam</p>
+                    <p className="text-amber-600 dark:text-amber-400 font-bold">Sedang Dipinjam</p>
                   )}
                 </div>
               </div>
 
-              <div className="p-4 bg-white space-y-3">
+              <div className="p-4 bg-white dark:bg-slate-900 space-y-3">
                 {session.assets.map((a: any, index: number) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-50 last:border-0 pb-2 last:pb-0">
-                    <p className="text-sm font-medium text-slate-700">
-                      <Link href={`/asset/${encodeURIComponent(a.assetId)}`} className="hover:underline text-slate-800">
+                  <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 last:border-0 pb-2 last:pb-0">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <Link href={`/asset/${encodeURIComponent(a.assetId)}`} className="hover:underline text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400">
                         {a.assetName}
                       </Link>
                     </p>
@@ -134,18 +134,18 @@ export default function HistoryPage() {
                       {a.checkoutMissing.length > 0 || a.checkinMissing.length > 0 ? (
                         <div className="space-y-1">
                           {a.checkoutMissing.length > 0 && (
-                            <span className="block text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">
+                            <span className="block text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-100 dark:border-red-900/40">
                               <span className="font-bold">Minus (Awal):</span> {a.checkoutMissing.join(', ')}
                             </span>
                           )}
                           {a.checkinMissing.length > 0 && (
-                            <span className="block text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100">
+                            <span className="block text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-100 dark:border-red-900/40">
                               <span className="font-bold">Minus (Akhir):</span> {a.checkinMissing.join(', ')}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">Tidak ada minus</span>
+                        <span className="text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">Tidak ada minus</span>
                       )}
                     </div>
                   </div>
